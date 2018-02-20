@@ -10,21 +10,22 @@ import tornado.web
 SESSION_LENGTH = 15*60
 # Number of seconds before assuming we failed to start the container
 STARTUP_MAX_TIME = 60
+# Container to run
+CONTAINER_IMAGE = "emilevauge/whoami"
+
 
 def _(text):
     '''Dummy gettext'''
     return text
 
 
-
 class AliveHandler(tornado.web.RequestHandler):
-#    @tornado.web.asynchronous
     def get(self):
         self.write("ok\n")
 
 
 class ServiceHubHandler(tornado.web.RequestHandler):
-#    @tornado.web.asynchronous
+    # @tornado.web.asynchronous
     def get(self):
         userid = self.request.headers['userid']
         sessions = self.application.user_sessions
@@ -67,7 +68,8 @@ class ServiceHubHandler(tornado.web.RequestHandler):
         client = docker.from_env()
         sessions[userid] = None
         sessions[userid] = time.time()
-        sessions[userid] = client.containers.run("emilevauge/whoami", detach=True, remove=True)
+        sessions[userid] = client.containers.run(CONTAINER_IMAGE, detach=True, remove=True, name='app-{userid}'.format(userid=userid))
+
 
 class ServiceHubApplication(tornado.web.Application):
     def __init__(self, *args, **kwargs):
@@ -90,5 +92,5 @@ def make_app():
 
 if __name__ == "__main__":
     app = make_app()
-    app.listen(8889)
+    app.listen(8080)
     tornado.ioloop.IOLoop.current().start()
