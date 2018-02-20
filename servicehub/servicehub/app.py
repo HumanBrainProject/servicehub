@@ -72,7 +72,7 @@ class ServiceHubHandler(tornado.web.RequestHandler):
             CONTAINER_IMAGE,
             detach=True,
             remove=True,
-            name='app-{userid}'.format(userid=userid),
+            name='app-{userid}'.format(userid=userid.split('@')[0]),
             network=NETWORK,
             labels={
                 'traefik.frontend.rule': 'Host:{host}; Headers: userid, {userid};'.format(host='hub.localhost', userid=userid)

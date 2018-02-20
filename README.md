@@ -30,11 +30,11 @@ Start with docker compose
 ### Service hub
 
 ### Reverse proxy
- * [] Use `userid` header to route to user's container
- * [] Redirect non-existing route to service hub
+ * [x] Use `userid` header to route to user's container
+ * [x] Redirect non-existing route to service hub
 
 ### Authentication
- * [] Add Apache
- * [] Create OIDC client
- * [] Configure Apache to authenticate user
- * [] Add user id in header `userid`
+ * [x] Add Apache
+ * [x] Create OIDC client
+ * [x] Configure Apache to authenticate user
+ * [x] Add user id in header `userid`
