@@ -16,6 +16,13 @@ def _(text):
     return text
 
 
+
+class AliveHandler(tornado.web.RequestHandler):
+#    @tornado.web.asynchronous
+    def get(self):
+        self.write("ok\n")
+
+
 class ServiceHubHandler(tornado.web.RequestHandler):
 #    @tornado.web.asynchronous
     def get(self):
@@ -74,6 +81,7 @@ class ServiceHubApplication(tornado.web.Application):
 def make_app():
     return ServiceHubApplication([
         (r"/", ServiceHubHandler),
+        (r"/alive", AliveHandler),
     ], autoreload=True)
 
 
