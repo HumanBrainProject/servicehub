@@ -1,0 +1,25 @@
+version: '2'
+
+services:
+  proxy:
+    image: traefik
+    command: --api --docker --docker.domain=docker.localhost --logLevel=DEBUG
+    networks:
+      - net
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev/null:/traefik.toml
+
+  hub:
+    image: hbp-hub
+    labels:
+      traefik.frontend.rule: "Host:hub.localhost"
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge
