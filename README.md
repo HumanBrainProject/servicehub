@@ -24,3 +24,17 @@ Start with docker compose
 
 
     docker compose ...
+
+## TODO
+
+### Service hub
+
+### Reverse proxy
+ * [] Use `userid` header to route to user's container
+ * [] Redirect non-existing route to service hub
+
+### Authentication
+ * [] Add Apache
+ * [] Create OIDC client
+ * [] Configure Apache to authenticate user
+ * [] Add user id in header `userid`
