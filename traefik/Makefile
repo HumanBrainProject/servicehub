@@ -10,12 +10,12 @@ HOST := hub.localhost
 define HELPTEXT
 Makefile usage
  Targets:
- 	build                 build the image of the demo app and the hub
-	down                  stop the infrastructure
- 	help                  this help
-	run  USER=me COLLAB=1 run  the app for the given user and collab
-	stop USER=me COLLAB=1 stop the app for the given user and collab
-	up                    spawn the infrastructure
+ 	build        build the image of the demo app and the hub
+	down         stop the infrastructure
+ 	help         this help
+	run  USER=me run  the app for the given user
+	stop USER=me stop the app for the given user
+	up           spawn the infrastructure
 endef
 
 export HELPTEXT
@@ -34,14 +34,13 @@ down:
 
 run: up
 	docker create \
-	  --name app-$(USER)-$(COLLAB) \
-	  --label traefik.frontend.rule="Host:$(HOST); Path:/$(USER)/$(COLLAB); PathStrip:/$(USER)/$(COLLAB)" \
+	  --name app-$(USER) \
+	  --label traefik.frontend.rule="Host:$(HOST); Headers: userid, $(USER);" \
 	  --network $(TRAEFIK_NETWORK) \
 	  -e USER=$(USER) \
-	  -e COLLAB=$(COLLAB) \
 	  $(APP_IMAGE)
-	docker start app-$(USER)-$(COLLAB)
+	docker start app-$(USER)
 
 stop:
-	docker stop app-$(USER)-$(COLLAB)
-	docker rm app-$(USER)-$(COLLAB)
+	docker stop app-$(USER)
+	docker rm app-$(USER)
