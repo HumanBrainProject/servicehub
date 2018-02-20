@@ -67,7 +67,7 @@ class ServiceHubHandler(tornado.web.RequestHandler):
         sessions = self.application.user_sessions
         client = docker.from_env()
         sessions[userid] = None
-        sessions[userid] = time.time()
+        sessions[userid] = int(time.time())
         sessions[userid] = client.containers.run(
             CONTAINER_IMAGE,
             detach=True,
