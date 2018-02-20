@@ -12,7 +12,7 @@ SESSION_LENGTH = 15*60
 STARTUP_MAX_TIME = 60
 # Container to run
 CONTAINER_IMAGE = "emilevauge/whoami"
-
+NETWORK = 'servicehub_net'
 
 def _(text):
     '''Dummy gettext'''
@@ -68,7 +68,16 @@ class ServiceHubHandler(tornado.web.RequestHandler):
         client = docker.from_env()
         sessions[userid] = None
         sessions[userid] = time.time()
-        sessions[userid] = client.containers.run(CONTAINER_IMAGE, detach=True, remove=True, name='app-{userid}'.format(userid=userid))
+        sessions[userid] = client.containers.run(
+            CONTAINER_IMAGE,
+            detach=True,
+            remove=True,
+            name='app-{userid}'.format(userid=userid),
+            network=NETWORK,
+            labels={
+                'traefik.frontend.rule': 'Host:{host}; Headers: userid, {userid};'.format(host='hub.localhost', userid=userid)
+            }
+        )
 
 
 class ServiceHubApplication(tornado.web.Application):
