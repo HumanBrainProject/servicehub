@@ -11,8 +11,15 @@ SESSION_LENGTH = 15*60
 # Number of seconds before assuming we failed to start the container
 STARTUP_MAX_TIME = 60
 # Container to run
-CONTAINER_IMAGE = "emilevauge/whoami"
+CONTAINER_IMAGE = "app-to-run"
 NETWORK = 'servicehub_net'
+
+NOT_STARTED = 'state.not_started'
+STARTING_FAILED = 'state.starting_failed'
+STARTING = 'state.starting'
+RUNNING = 'state.running'
+EXITED = 'state.exited'
+DEFAULT = 'state.default'
 
 def _(text):
     '''Dummy gettext'''
@@ -30,43 +37,65 @@ class ServiceHubHandler(tornado.web.RequestHandler):
         userid = self.request.headers['userid']
         sessions = self.application.user_sessions
 
-        try:
-            container = sessions[userid]
-        except KeyError:
+        state = self.get_state(sessions, userid)
+
+        if state == NOT_STARTED:
             self.start_container(userid)
             self.write(str(sessions[userid]) + "\n")
             self.set_header('refresh', '1; ' + self.request.uri)
             return
 
-        if container is None:
+        if state == STARTING_FAILED:
+            self.write(_("session failed to start\n"))
+            return
+
+        if state == STARTING:
             self.set_header('refresh', '5; ' + self.request.uri)
             self.write(_("We are launching your application, please be patient"))
-        elif isinstance(container, int):
-            if time.time() - container > STARTUP_MAX_TIME:
-                # @TODO
-                self.write(_("session failed to start\n"))
-            else:
-                self.set_header('refresh', '5; ' + self.request.uri)
-                self.write(_("We are launching your application, please be patient"))
-        elif container.status in ('running', 'created'):
+            return
+
+        if state == RUNNING:
             self.write(_("Error: Your container is running, what are you doing here?"))
             # @TODO what to do?
-        elif container.status == 'exited':
+            return
+
+        if state == EXITED:
             # Don't do anything, we'll create a new container
             self.write(_("Your container had exited, started a new on.?"))
             del sessions[userid]
             self.set_header('refresh', '1; ' + self.request.uri)
-        else:
+            return
+
+        if state == DEFAULT:
             # @TODO what?
             print("error: ")
             print(container)
             print(container.status)
-        return
+            return
+
+    def get_state(self, sessions, userid):
+        try:
+            container = sessions[userid]
+        except KeyError:
+            return NOT_STARTED
+
+        if isinstance(container, int):
+            if time.time() - container > STARTUP_MAX_TIME:
+                return STARTING_FAILED
+
+            return STARTING
+
+        if container.status in ('running', 'created'):
+            return RUNNING
+
+        if container.status == 'exited':
+            return EXITED
+
+        return DEFAULT
 
     def start_container(self, userid):
         sessions = self.application.user_sessions
         client = docker.from_env()
-        sessions[userid] = None
         sessions[userid] = int(time.time())
         sessions[userid] = client.containers.run(
             CONTAINER_IMAGE,
@@ -76,7 +105,8 @@ class ServiceHubHandler(tornado.web.RequestHandler):
             network=NETWORK,
             labels={
                 'traefik.frontend.rule': 'Host:{host}; Headers: userid, {userid};'.format(host='hub.localhost', userid=userid)
-            }
+            },
+            environment={'USER': userid}
         )
 
 
