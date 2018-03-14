@@ -4,7 +4,7 @@ define HELPTEXT
 Makefile usage
  Targets:
     help      this help
- 	build     build the docker images
+	build     build the docker images
 	start     start the infrastructure
 	stop      stop the infrastructure
 endef
