@@ -13,13 +13,15 @@ services:
     command: --api --docker --docker.domain=docker.localhost --logLevel=DEBUG
     networks:
       - net
+    ports:
+      - "8081:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
   hub:
     image: servicehub
     labels:
-      traefik.frontend.rule: "Host:hub.localhost"
+      traefik.frontend.rule: "HostRegexp:localhost,{subdomain:[a-z]+}.localhost"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:

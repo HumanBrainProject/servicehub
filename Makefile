@@ -15,11 +15,11 @@ help:
 
 build:
 	docker build -t servicehub -f servicehub/Dockerfile servicehub
-	docker build -t app-to-run -f Dockerfile.app .
+	docker build -t echoheaders -f sample/app/Dockerfile sample/app
 	docker build -t hbpauth -f apache/Dockerfile apache
 
 start: build stop
-	docker-compose up -d
+	docker-compose up
 
 stop:
 	docker-compose down

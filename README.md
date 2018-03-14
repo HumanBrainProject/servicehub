@@ -28,6 +28,7 @@ Start with docker compose
 ## TODO
 
 ### Service hub
+ * [ ] Add configurable route rule
 
 ### Reverse proxy
  * [x] Use `userid` header to route to user's container

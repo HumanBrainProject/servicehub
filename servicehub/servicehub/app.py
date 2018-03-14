@@ -10,16 +10,15 @@ import tornado.web
 SESSION_LENGTH = 15*60
 # Number of seconds before assuming we failed to start the container
 STARTUP_MAX_TIME = 60
-# Container to run
-CONTAINER_IMAGE = "app-to-run"
 NETWORK = 'servicehub_net'
 
-NOT_STARTED = 'state.not_started'
-STARTING_FAILED = 'state.starting_failed'
-STARTING = 'state.starting'
-RUNNING = 'state.running'
-EXITED = 'state.exited'
-DEFAULT = 'state.default'
+CREATED = 'created'
+DEAD = 'dead'
+EXITED = 'exited'
+NOT_STARTED = 'not_started'
+PAUSED = 'paused'
+RESTARTING = 'restarting'
+RUNNING = 'running'
 
 def _(text):
     '''Dummy gettext'''
@@ -31,84 +30,120 @@ class AliveHandler(tornado.web.RequestHandler):
         self.write("ok\n")
 
 
-class ServiceHubHandler(tornado.web.RequestHandler):
-    # @tornado.web.asynchronous
-    def get(self):
-        userid = self.request.headers['userid']
-        sessions = self.application.user_sessions
+class ContainerizedApp:
 
-        state = self.get_state(sessions, userid)
+    def __init__(self, request):
+        self.client = docker.from_env()
+        self.request = request
 
-        if state == NOT_STARTED:
-            self.start_container(userid)
-            self.write(str(sessions[userid]) + "\n")
-            self.set_header('refresh', '1; ' + self.request.uri)
-            return
+    def get_container_id(self):
+        return '1'
 
-        if state == STARTING_FAILED:
-            self.write(_("session failed to start\n"))
-            return
+    def get_route_rule(self):
+        pass
 
-        if state == STARTING:
-            self.set_header('refresh', '5; ' + self.request.uri)
-            self.write(_("We are launching your application, please be patient"))
-            return
+    def get_image_name(self):
+        pass
 
-        if state == RUNNING:
-            self.write(_("Error: Your container is running, what are you doing here?"))
-            # @TODO what to do?
-            return
+    def get_host(self):
+        pass
 
-        if state == EXITED:
-            # Don't do anything, we'll create a new container
-            self.write(_("Your container had exited, started a new on.?"))
-            del sessions[userid]
-            self.set_header('refresh', '1; ' + self.request.uri)
-            return
-
-        if state == DEFAULT:
-            # @TODO what?
-            print("error: ")
-            print(container)
-            print(container.status)
-            return
-
-    def get_state(self, sessions, userid):
-        try:
-            container = sessions[userid]
-        except KeyError:
-            return NOT_STARTED
-
-        if isinstance(container, int):
-            if time.time() - container > STARTUP_MAX_TIME:
-                return STARTING_FAILED
-
-            return STARTING
-
-        if container.status in ('running', 'created'):
-            return RUNNING
-
-        if container.status == 'exited':
-            return EXITED
-
-        return DEFAULT
-
-    def start_container(self, userid):
-        sessions = self.application.user_sessions
-        client = docker.from_env()
-        sessions[userid] = int(time.time())
-        sessions[userid] = client.containers.run(
-            CONTAINER_IMAGE,
-            detach=True,
-            remove=True,
-            name='app-{userid}'.format(userid=userid.split('@')[0]),
-            network=NETWORK,
-            labels={
-                'traefik.frontend.rule': 'Host:{host}; Headers: userid, {userid};'.format(host='hub.localhost', userid=userid)
-            },
-            environment={'USER': userid}
+    def get_container_name(self):
+        return '{image}-{id}'.format(
+            image=self.get_image_name(),
+            id=self.get_container_id()
         )
 
+    def is_concerned(self):
+        return self.request.headers['Host'] == self.get_host()
+
+    def start(self):
+        return self.client.containers.run(
+            self.get_image_name(),
+            detach=True,
+            remove=True,
+            name=self.get_container_name(),
+            network=NETWORK,
+            labels={
+                'traefik.frontend.rule': 'Host:{host}; {rule}'.format(
+                    host=self.get_host(),
+                    rule=self.get_route_rule()
+                )
+            }
+        )
+
+    def get_header(self, name):
+        return self.request.headers[name]
+
+    def remove(self):
+        self.get_container().remove()
+
+    def unpause(self):
+        self.get_container().unpause()
+
+    def get_container(self):
+        return self.client.containers.get(self.get_container_name())
+
+    def get_state(self):
+        try:
+            return self.get_container().status
+        except docker.errors.NotFound:
+            return NOT_STARTED
+
+class EchoHeadersApp(ContainerizedApp):
+    def get_host(self):
+        return 'echo.localhost'
+
+    def get_container_id(self):
+        return self.get_header('Oidc_claim_sub')
+
+    def get_route_rule(self):
+        return 'Headers: Oidc_claim_sub, {userid};'.format(
+            userid=self.get_header('Oidc_claim_sub')
+        )
+
+    def get_image_name(self):
+        return 'echoheaders'
+
+
+class ServiceHubHandler(tornado.web.RequestHandler):
+    # @tornado.web.asynchronous
+    apps = [EchoHeadersApp]
+    def get(self):
+        containerized_app = self.get_concerned_app()
+
+        if containerized_app is None:
+            self.write("No app configured for this route")
+            return
+
+        state = containerized_app.get_state()
+
+        if state in [NOT_STARTED, CREATED, EXITED]:
+            self.write("You have no container, we will spawn one")
+            containerized_app.start()
+
+        if state == DEAD:
+            self.write("Your container failed stopping, we will spawn a new one")
+            containerized_app.remove()
+
+        if state == PAUSED:
+            self.write("Your container is paused, we will unpause it")
+            containerized_app.unpause()
+
+        if state == RESTARTING:
+            self.write("Your container is restarting")
+
+        if state == RUNNING:
+            self.write("Error: Your container is running, what are you doing here?")
+
+        self.set_header('refresh', '3; ' + self.request.uri)
+
+    def get_concerned_app(self):
+        for App in self.apps:
+            containerized_app = App(self.request)
+            if containerized_app.is_concerned():
+                return containerized_app
+        return None
 
 class ServiceHubApplication(tornado.web.Application):
     def __init__(self, *args, **kwargs):
