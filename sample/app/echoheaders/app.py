@@ -51,7 +51,15 @@ def make_app():
     return app
 
 
+def shutdown(*args, **kwargs):
+    tornado.ioloop.IOLoop.current().stop()
+
+
 if __name__ == "__main__":
+    import signal
+    import sys
+    signal.signal(signal.SIGTERM, shutdown)
     app = make_app()
     app.listen(8080)
     tornado.ioloop.IOLoop.current().start()
+    sys.exit(0)

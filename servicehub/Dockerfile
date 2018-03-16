@@ -1,12 +1,13 @@
-FROM python:alpine
+FROM python:slim
 
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY servicehub .
+COPY servicehub servicehub
+COPY servicehub.conf ./
 
 EXPOSE 8080
 
-CMD [ "python", "app.py" ]
+CMD [ "python", "servicehub/run.py" ]

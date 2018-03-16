@@ -21,7 +21,7 @@ services:
   hub:
     image: servicehub
     labels:
-      traefik.frontend.rule: "HostRegexp:localhost,{subdomain:[a-z]+}.localhost"
+      traefik.frontend.rule: "Host:hub.localhost"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
