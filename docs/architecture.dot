@@ -1,0 +1,33 @@
+digraph servicehub {
+    node[shape=record]
+    user1 [label="User 1" shape=box];
+    user2 [label="User 2" shape=box];
+    subgraph hbp{
+        label = "Human Brain Project";
+        oidc [label="OIDC" shape=box];
+    }
+    subgraph cluster_servicehubvm {
+        label = "ServiceHub VM";
+        auth [label="Authenticating Proxy (Apache)" shape=box];
+        routing [label="Routing Proxy (Traefik)" shape=box];
+        servicehub [label="ServiceHub" shape=box];
+        dockerd [label="Docker Daemon" shape=box];
+        subgraph cluster_docker {
+            label= "Managed Docker Containers"
+            app1user1 [label="User 1 App 1" shape=box];
+            app1user2 [label="User 1 App 2" shape=box];
+        }
+
+    }
+    user1 -> auth;
+    user2 -> auth;
+    auth -> oidc;
+    oidc -> auth;
+    auth -> routing;
+    routing -> servicehub;
+    servicehub -> dockerd;
+    dockerd -> app1user1;
+    dockerd -> app1user2;
+    routing -> app1user1;
+    routing -> app1user2;
+}

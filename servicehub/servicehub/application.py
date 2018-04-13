@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import asyncio
 import logging
 import aiodocker
 from tornado.web import Application
-from tornado.locks import Lock
+from session_manager import SessionManager
 
 
 class ServiceHubApplication(Application):
@@ -16,30 +15,30 @@ class ServiceHubApplication(Application):
         super().__init__(*args, **kwargs)
         self.ioloop = ioloop
         loglevel = config['application'].get('logging_level', 'DEBUG')
-        self.logger = logging.getLogger()
         loglevel = getattr(logging, loglevel, logging.DEBUG)
+        self.logger = logging.getLogger()
         self.logger.setLevel(loglevel)
 
-        self.sessions = {'lock': Lock()}
+        self.session_manager = SessionManager()
         self.docker = aiodocker.Docker()
-        self.images = config['images']
+        image_config = config['image']
+        self.image = image_config.get('name')
+        self.image_label = image_config.get('label', 'latest')
+        self.image_remove = image_config.getboolean('remove', False)
         self.session_lifetime = config['session'].get('lifetime', 21600)
         self.remove_container = config['session'].getboolean('remove', False)
-        self.running = True
 
     async def shutdown(self):
-        self.running = False
         self.logger.debug("Running application shutdown")
-        del self.sessions['lock']
+        self.http_server.stop()
         await self._stop_containers()
         await self.docker.close()
         self.ioloop.stop()
 
     async def _stop_containers(self):
         self.logger.debug("Stopping containers.")
-        for user, session in self.sessions.items():
-            del session['lock']
-            for container in session.values():
-                self.logger.debug("Stopping container %s", container)
-                await container.stop()
+        for user, session in self.session_manager.items():
+            container = session['container']
+            self.logger.debug("Stopping container %s", container)
+            await container.stop()
         self.logger.debug("Containers stopped.")

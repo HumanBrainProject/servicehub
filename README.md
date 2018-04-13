@@ -10,19 +10,24 @@ A Traefik reverse proxy provides the routing based on a userid parameter in the 
 
 ## Configuring
 
-There are two applications that need to be configured. The first is Apache which is authenticating requests. It also needs to be configured for SSL. The second is the servicehub, which needs to be provided with the Docker image for the apps, and the settings for the containers.
+There are two applications that need to be configured. The first is Apache which is authenticating requests. It needs OpenID tokens to connect to our OpenID provider, and also needs to be configured for SSL. The second is the servicehub, which needs to be provided with the Docker image for the apps, and the settings for the containers.
 
 ### Configuration files
 
-#### Apache
-
-Configuration file: apache/servicehub.conf
-Template: apache/templates/servicehub.conf
-
-#### Servicehub
-
-Configuration: servicehub/servicehub.conf
-Template: servicehub/templates/servicehub.conf
+- _docker-compose.yaml_:
+  Get an SSL certificate for your domain. You can find steps for setting it up with Letsencrypt [here](https://letsencrypt.org/getting-started/).
+  Once you have SSL certificates, update the mapping in `docker-compose.yaml`'s 'services/volumes' to point to the certificate directory. For Debian based distros, this will usually be `/etc/letsencrypt/live` if you use letsencrypt's certbot to obtain the certificates.
+- _apache/servicehub.conf_:
+  Copy apache/servicehub.conf.example to apache/servicehub.conf and configure the OIDC parameters.
+  + OIDCClientID
+  + OIDCClientSecret
+  + OIDCRedirectUri
+  + OIDCCryptoPassphrase
+  + @TODO SSL CONFIG
+- _servicehub/servicehub.conf_:
+  Copy servicehub/servicehub.conf.example to servicehub/servicehub.conf
+  Update the image name and optionnaly label to use your application's image.
+  NOTE: The session lifetime is not implemented yet.
 
 ## Installing
 
@@ -40,11 +45,13 @@ Start with docker compose
 
     make start
 
-## Application container
+## Application
 
 For security purposes, the containerized application should not run as root!
 
-## TODO
+## Authentication and user ACLs
+
+## Connecting to services
 
 ### Configuration wizard
  * [ ] apache
