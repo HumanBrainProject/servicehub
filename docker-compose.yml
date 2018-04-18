@@ -6,7 +6,11 @@ services:
     networks:
       - net
     ports:
+      # This should be used for development only. In production,
+      # it should redirect to https.
       - "80:80"
+      # Expose https port if running with ssl.
+      - "443:443"
     volumes:
       - /PATH/TO/SSL/CERTS:/etc/apache2/certs:Z
 

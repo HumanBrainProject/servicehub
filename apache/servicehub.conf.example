@@ -1,27 +1,35 @@
+# Listen on 443 instead of 80 for SSL.
 <VirtualHost *:80>
-    ServerName hub.localhost
-    DocumentRoot /var/www/html
+    # Your domain name
+    ServerName my.domain.org
 
-    OIDCProviderMetadataURL "https://services-dev.humanbrainproject.eu/oidc/.well-known/openid-configuration"
+    # The OIDC service provider. For the HBP, it is here:
+    OIDCProviderMetadataURL "https://services.humanbrainproject.eu/oidc/.well-known/openid-configuration"
     # You can register your OpenID Client from https://collab.humanbrainproject.eu/#/collab/54/nav/1051
-    # using the server flow. Set the redirect_uri to the base uri of your service + redirect_uri, or
+    # using the server flow. Set the redirect_uri to your domain + /redirect_uri, and
     # change it to match OIDCRedirectURI bellow.
     # Obtain these from the HBP OpenID Server.
     OIDCClientID "My-Client-ID"
     OIDCClientSecret "My-OpenID-Secret"
     # /redirect_uri is used to authenticate you. It will be consumed by Apache and will not be requests to it
     # will not be forwarded to your application.
-    OIDCRedirectURI "https://my-domain/redirect_uri"
+    OIDCRedirectURI "http(s)://my-domain/redirect_uri"
     # Set a random passphrase here
     OIDCCryptoPassphrase "I should be a random password. Please set me."
     # Don't change this one, it is used by
     OIDCAuthNHeader "userid"
 
+    # You should not need to modify anything bellow here.
+
+    DocumentRoot /var/www/html
+
+    # This enables openID. Leave as is.
     <Location "/">
         AuthType openid-connect
         Require valid-user
     </Location>
 
+    # This handles proxying, leave as is.
     ProxyPreserveHost On
     ProxyPass /redirect_uri !
     ProxyPass / http://proxy/
