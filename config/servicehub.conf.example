@@ -1,7 +1,10 @@
-# Listen on 443 instead of 80 for SSL.
+# 
+# this is a sample config to be used for development
+#   we only listen on http (port 80)
+#
 <VirtualHost *:80>
     # Your domain name
-    ServerName my.domain.org
+    ServerName localhost
 
     # The OIDC service provider. For the HBP, it is here:
     OIDCProviderMetadataURL "https://services.humanbrainproject.eu/oidc/.well-known/openid-configuration"
@@ -13,10 +16,10 @@
     OIDCClientSecret "My-OpenID-Secret"
     # /redirect_uri is used to authenticate you. It will be consumed by Apache and will not be requests to it
     # will not be forwarded to your application.
-    OIDCRedirectURI "http(s)://my-domain/redirect_uri"
+    OIDCRedirectURI "http://localhost/redirect_uri"
     # Set a random passphrase here
     OIDCCryptoPassphrase "I should be a random password. Please set me."
-    # Don't change this one, it is used by
+    # Don't change this one, it is used by oidc
     OIDCAuthNHeader "userid"
 
     # You should not need to modify anything bellow here.
@@ -30,8 +33,25 @@
     </Location>
 
     # This handles proxying, leave as is.
+	RewriteEngine On
+    ProxyAddHeaders On
     ProxyPreserveHost On
+    #
+    # special url used by mod oidc, do not proxy
     ProxyPass /redirect_uri !
-    ProxyPass / http://proxy/
-    ProxyPassReverse / http://proxy/
+    #
+    # proxy all other calls to traefic, with special case for websocket
+    #
+    # if request contains a upgrade header, proxy to websocket
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*)           ws://proxy/$1 [P,L]
+    
+    # otherwise proxy a http
+    RewriteCond %{HTTP:Upgrade} !=websocket [NC]
+    RewriteRule /(.*)           http://proxy/$1 [P,L]
+    
+    # proxy reverse (for possible redirects)
+ 	ProxyPassReverse / http://proxy/
 </VirtualHost>
+
+
