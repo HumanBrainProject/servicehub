@@ -1,22 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ''' Run the servicehub. '''
-
-
-import configparser
-import os
-
+import logging
 import tornado.ioloop
 
+import config
+from config import get_config
 from application import ServiceHubApplication
 from handlers import AliveHandler, ServiceHubHandler
-
-
-def get_config():
-    config = configparser.ConfigParser()
-    configpath = os.environ.get("SERVICEHUB_CONFIG", 'servicehub.conf')
-    config.read(('/etc/servicehub.conf', configpath))
-    return config
 
 
 def sigterm_handler(app, ioloop, *args, **kwargs):
@@ -27,9 +18,12 @@ def sigterm_handler(app, ioloop, *args, **kwargs):
 if __name__ == "__main__":
     from functools import partial
     import signal
-    config = get_config()
+    configuration = get_config()
+    loglevel = configuration['application'].get('logging_level', 'DEBUG')
+    loglevel = getattr(logging, loglevel, logging.DEBUG)
+    config.LOGLEVEL = loglevel
     ioloop = tornado.ioloop.IOLoop.current()
-    app = ServiceHubApplication(config, ioloop, [
+    app = ServiceHubApplication(configuration, ioloop, [
         (r"^/alive$", AliveHandler),
         (r".*", ServiceHubHandler),
     ])

@@ -4,6 +4,7 @@ import logging
 import aiodocker
 from tornado.web import Application
 from session_manager import SessionManager
+import config
 
 
 class ServiceHubApplication(Application):
@@ -11,22 +12,20 @@ class ServiceHubApplication(Application):
     @param  dict config  The main application configuration.
     @option  dict images  The available images as: path => docker image name
     '''
-    def __init__(self, config, ioloop, *args, **kwargs):
+    def __init__(self, config_, ioloop, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ioloop = ioloop
-        loglevel = config['application'].get('logging_level', 'DEBUG')
-        loglevel = getattr(logging, loglevel, logging.DEBUG)
-        self.logger = logging.getLogger()
-        self.logger.setLevel(loglevel)
+        self.logger = logging.getLogger('servicehub')
+        self.logger.setLevel(config.LOGLEVEL)
 
         self.session_manager = SessionManager()
         self.docker = aiodocker.Docker()
-        image_config = config['image']
+        image_config = config_['image']
         self.image = image_config.get('name')
         self.image_label = image_config.get('label', 'latest')
         self.image_remove = image_config.getboolean('remove', False)
-        self.session_lifetime = config['session'].get('lifetime', 21600)
-        self.remove_container = config['session'].getboolean('remove', False)
+        self.session_lifetime = config_['session'].get('lifetime', 21600)
+        self.remove_container = config_['session'].getboolean('remove', False)
 
     async def shutdown(self):
         self.logger.debug("Running application shutdown")

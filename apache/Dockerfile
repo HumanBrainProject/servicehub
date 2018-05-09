@@ -10,6 +10,12 @@ RUN a2enmod auth_openidc && a2enmod ssl && a2enmod rewrite && a2enmod proxy && a
 # disable default virtual host
 RUN a2dissite 000-default
 
+# trick to send logs to stderr and stdout
+# see : https://serverfault.com/questions/711168/writing-apache2-logs-to-stdout-stderr
+#
+RUN ln -sf /proc/self/fd/1 /var/log/apache2/other_vhosts_access.log && \
+    ln -sf /proc/self/fd/2 /var/log/apache2/error.log
+
 # for development you may change this to unprivileged port (for example 8080 and 8443)
 EXPOSE 80
 EXPOSE 443

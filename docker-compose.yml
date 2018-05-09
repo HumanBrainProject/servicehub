@@ -10,6 +10,8 @@ services:
       # it should redirect to https.
       - "80:80"
     volumes:
+      # ssl certificates
+      # - /etc/letsencrypt:/etc/letsencrypt:ro
       # apache virtual host 
       - ./config:/etc/apache2/sites-enabled/:ro
 
@@ -25,13 +27,20 @@ services:
 
   hub:
     image: servicehub
+    environment:
+      PYTHONUNBUFFERED: 1
     labels:
       traefik.frontend.rule: "Host:hub.localhost"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./servicehub/servicehub.conf:/usr/src/app/servicehub.conf:ro
     networks:
       - net
 
 networks:
   net:
     driver: bridge
+    #
+    # This option is needed on openstack (and may be other platforms) where the network MTU is not 1500
+    #driver_opts:
+    #   com.docker.network.driver.mtu: 1450
