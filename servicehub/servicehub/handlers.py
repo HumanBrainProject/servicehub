@@ -1,6 +1,11 @@
 # coding: utf-8
+import logging
+import uuid
+
 from tornado.web import HTTPError, RequestHandler
 from aiodocker.exceptions import DockerError
+
+import config
 
 
 class AliveHandler(RequestHandler):
@@ -8,8 +13,25 @@ class AliveHandler(RequestHandler):
         self.write("ok\n")
 
 
+request_formatter = logging.Formatter(
+    '%(asctime)s - rid: %(request_id)s - uid: %(userid)s \
+    - %(levelname)s - %(message)s')
+
+
 class ServiceHubHandler(RequestHandler):
+    def log_filter(self, record):
+        record.userid = self.userid
+        record.request_id = self.request_id
+        return True
+
     def prepare(self):
+        self.logger = logging.Logger('servicehub.handlers')
+        self.logger.setLevel(config.LOGLEVEL)
+        ch = logging.StreamHandler()
+        ch.setFormatter(request_formatter)
+        self.logger.addHandler(ch)
+        self.logger.addFilter(self.log_filter)
+        self.request_id = uuid.uuid1().hex
         try:
             self.userid = self.request.headers['userid'].split('@', 1)[0]
         except KeyError as e:
@@ -21,6 +43,9 @@ class ServiceHubHandler(RequestHandler):
         image = self.application.image
         label = self.application.image_label
         remove = self.application.image_remove
+        self.logger.debug("Request for user %s", self.userid)
+        self.write("I am working hard to create your application. \
+            Give me a few moments.")
         await self._get_or_create_container(image, label, remove)
         self.redirect(self.request.uri, 307)
 
@@ -41,19 +66,23 @@ class ServiceHubHandler(RequestHandler):
                 "State", {}).get("Running", False)
 
             if not running:
+                self.logger.debug("Starting container.")
                 try:
                     await container.start()
                 except DockerError as e:
-                    self.write("Failed to start container.")
+                    self.logger.warn("Failed to start container.")
                     raise e
 
     async def _docker_find_container(self, userid, image, name, label, remove):
         docker = self.application.docker
         try:
             # container exists
-            return await docker.containers.get(name)
+            container = await docker.containers.get(name)
+            self.logger.debug('Found container for %s.', self.userid)
+            return container
         except DockerError:
             # Create new container
+            self.logger.debug('Creating container for %s.', self.userid)
             return await self._create_container(
                 userid, image, name, label, remove)
 
@@ -84,5 +113,5 @@ class ServiceHubHandler(RequestHandler):
                 name=name
             )
         except DockerError as e:
-            self.write("Failed to create container.")
+            self.logger.warn("Failed to create container for %s.", userid)
             raise e
