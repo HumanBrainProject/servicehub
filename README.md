@@ -6,7 +6,8 @@ The goal is to allow scientists to provide simple docker containers without mana
 
 Authentication is provided by OAUTH in an Apache proxy. Docker containers are spawned for each user and destroyed after a period of inactivity.
 
-A Traefik reverse proxy provides the routing based on a userid parameter in the header. You can see an architecture diagram [[here]] and a traffic flow schema [[here]].
+A Traefik reverse proxy provides the routing based on a userid parameter in the header. You can see an architecture diagram ![servicehub architecture](docs/servicehub.jpg).
+
 
 ## Configuring
 
@@ -21,8 +22,8 @@ You application will need to be registered with the OpenID Connect server. You c
 - _docker-compose.yaml_:
   Get an SSL certificate for your domain. You can find steps for setting it up with Letsencrypt [here](https://letsencrypt.org/getting-started/).
   Once you have SSL certificates, update the mapping in `docker-compose.yaml`'s 'services/volumes' to point to the certificate directory. For Debian based distros, this will usually be `/etc/letsencrypt/live` if you use letsencrypt's certbot to obtain the certificates.
-- _apache/servicehub.conf_:
-  Copy apache/servicehub.conf.example to apache/servicehub.conf and configure the OIDC parameters.
+- _config/servicehub.conf_:
+  Copy config/servicehub.conf.example to config/servicehub.conf and configure the OIDC parameters.
   + ServerName: your domain name
   + OIDCClientID: the client ID you obtained from the collab when creating a client.
   + OIDCClientSecret: the secret you obtained from the collab when creating a client.
@@ -68,6 +69,8 @@ For security purposes, the containerized application should not run as root!
 ### ServiceHub
 
  * [ ] session monitoring from Traefik logs
+ * [ ] configurable volume mounting
+ * [ ] configurable docker parameters (quotas, etc)
 
 ### Reverse proxy
  * [ ] access logs
