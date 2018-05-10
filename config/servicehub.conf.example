@@ -1,4 +1,4 @@
-# 
+#
 # this is a sample config to be used for development
 #   we only listen on http (port 80)
 #
@@ -33,7 +33,7 @@
     </Location>
 
     # This handles proxying, leave as is.
-	RewriteEngine On
+    RewriteEngine On
     ProxyAddHeaders On
     ProxyPreserveHost On
     #
@@ -45,13 +45,11 @@
     # if request contains a upgrade header, proxy to websocket
     RewriteCond %{HTTP:Upgrade} =websocket [NC]
     RewriteRule /(.*)           ws://proxy/$1 [P,L]
-    
+
     # otherwise proxy a http
     RewriteCond %{HTTP:Upgrade} !=websocket [NC]
     RewriteRule /(.*)           http://proxy/$1 [P,L]
-    
+
     # proxy reverse (for possible redirects)
- 	ProxyPassReverse / http://proxy/
+    ProxyPassReverse / http://proxy/
 </VirtualHost>
-
-

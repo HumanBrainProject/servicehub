@@ -1,13 +1,13 @@
-# 
+#
 # this is a sample config to be used for production
 # you have to use a real FQDN doman name, and provide a valid SSL certificate
 #   we only listen on http (port 80) and https (port 443)
 #   all http trafic is redirected to https
 #
 <VirtualHost *:80>
-	ServerName myservice.mydomain.org
-	#
-	# redirect http to https
+    ServerName myservice.mydomain.org
+    #
+    # redirect http to https
     RewriteEngine On
     RewriteCond %{HTTPS} off
     RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}
@@ -16,13 +16,13 @@
 
 <VirtualHost *:443>
     # Your domain name
-	ServerName myservice.mydomain.org
-	
-	#
-	# SSL config
-	#
-	SSLEngine on
-	SSLCertificateChainFile "/etc/letsencrypt/certs/letsencrypt-intermediate-ca.pem"
+    ServerName myservice.mydomain.org
+
+    #
+    # SSL config
+    #
+    SSLEngine on
+    SSLCertificateChainFile "/etc/letsencrypt/certs/letsencrypt-intermediate-ca.pem"
     SSLCertificateFile "/etc/letsencrypt/certs/myservice.mydomain.org.crt"
     SSLCertificateKeyFile "/etc/letsencrypt/certs/myservice.mydomain.org.key"
 
@@ -54,7 +54,7 @@
     </Location>
 
     # This handles proxying, leave as is.
-	RewriteEngine On
+    RewriteEngine On
     ProxyAddHeaders On
     ProxyPreserveHost On
     #
@@ -66,13 +66,11 @@
     # if request contains a upgrade header, proxy to websocket
     RewriteCond %{HTTP:Upgrade} =websocket [NC]
     RewriteRule /(.*)           ws://proxy/$1 [P,L]
-    
+
     # otherwise proxy a http
     RewriteCond %{HTTP:Upgrade} !=websocket [NC]
     RewriteRule /(.*)           http://proxy/$1 [P,L]
-    
+
     # proxy reverse (for possible redirects)
- 	ProxyPassReverse / http://proxy/
+    ProxyPassReverse / http://proxy/
 </VirtualHost>
-
-
