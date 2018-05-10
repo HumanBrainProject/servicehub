@@ -23,13 +23,14 @@ You application will need to be registered with the OpenID Connect server. You c
   Get an SSL certificate for your domain. You can find steps for setting it up with Letsencrypt [here](https://letsencrypt.org/getting-started/).
   Once you have SSL certificates, update the mapping in `docker-compose.yaml`'s 'services/volumes' to point to the certificate directory. For Debian based distros, this will usually be `/etc/letsencrypt/live` if you use letsencrypt's certbot to obtain the certificates.
 - _config/servicehub.conf_:
-  Copy config/servicehub.conf.example to config/servicehub.conf and configure the OIDC parameters.
+  Copy config/servicehub(-ssl).conf.example to config/servicehub.conf and configure the OIDC parameters.
   + ServerName: your domain name
   + OIDCClientID: the client ID you obtained from the collab when creating a client.
   + OIDCClientSecret: the secret you obtained from the collab when creating a client.
   + OIDCRedirectUri: http(s)://my-domain.org/redirect_uri
   + OIDCCryptoPassphrase: a secret random passphrase
-  + @TODO SSL CONFIG
+  + OIDCAuthNHeader: the user id field used by the OIDC provider. HBP users `sub`.
+  + If using SSL, adjust the SSL certificate paths as necessary. You should have mapped the directory they are stored in in the docker-compose.yaml.
 - _servicehub/servicehub.conf_:
   Copy servicehub/servicehub.conf.example to servicehub/servicehub.conf
   Update the image name and optionnaly label to use your application's image.
