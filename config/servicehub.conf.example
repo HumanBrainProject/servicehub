@@ -20,7 +20,7 @@
     # Set a random passphrase here
     OIDCCryptoPassphrase "I should be a random password. Please set me."
     # Don't change this one, it is used by oidc
-    OIDCAuthNHeader "userid"
+    OIDCAuthNHeader "sub"
 
     # You should not need to modify anything bellow here.
 

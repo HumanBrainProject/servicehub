@@ -12,7 +12,7 @@ services:
     volumes:
       # ssl certificates
       # - /etc/letsencrypt:/etc/letsencrypt:ro
-      # apache virtual host 
+      # apache virtual host
       - ./config:/etc/apache2/sites-enabled/:ro
 
   proxy:
@@ -30,7 +30,7 @@ services:
     environment:
       PYTHONUNBUFFERED: 1
     labels:
-      traefik.frontend.rule: "Host:hub.localhost"
+      traefik.frontend.rule: "HostRegexp:{catchall:.*}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./servicehub/servicehub.conf:/usr/src/app/servicehub.conf:ro
