@@ -22,9 +22,9 @@
     # SSL config
     #
     SSLEngine on
-    SSLCertificateChainFile "/etc/letsencrypt/certs/letsencrypt-intermediate-ca.pem"
-    SSLCertificateFile "/etc/letsencrypt/certs/myservice.mydomain.org.crt"
-    SSLCertificateKeyFile "/etc/letsencrypt/certs/myservice.mydomain.org.key"
+    SSLCertificateChainFile "/etc/letsencrypt/live/myservice.mydomain.org/chain.pem"
+    SSLCertificateFile "/etc/letsencrypt/live/myservice.mydomain.org/cert.pem"
+    SSLCertificateKeyFile "/etc/letsencrypt/live/myservice.mydomain.org/privkey.pem"
 
 
     # The OIDC service provider. For the HBP, it is here:
