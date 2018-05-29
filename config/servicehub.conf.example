@@ -19,8 +19,9 @@
     OIDCRedirectURI "http://localhost/redirect_uri"
     # Set a random passphrase here
     OIDCCryptoPassphrase "I should be a random password. Please set me."
-    # This is the user id field used by your OpenID Connect provider. HBP uses `sub`.
-    OIDCAuthNHeader "sub"
+    # This is the header set by Apache's OIDC extension.
+    # It is used by servicehub, so don't change it.
+    OIDCAuthNHeader "userid"
 
     # You should not need to modify anything bellow here.
 
