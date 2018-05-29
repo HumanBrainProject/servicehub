@@ -33,7 +33,7 @@ class ServiceHubHandler(RequestHandler):
         self.logger.addFilter(self.log_filter)
         self.request_id = uuid.uuid1().hex
         try:
-            self.userid = self.request.headers['userid'].split('@', 1)[0]
+            self.userid = self.request.headers['Oidc_claim_sub']
         except KeyError as e:
             raise HTTPError(401,
                             'Requests need to be passed by service \
