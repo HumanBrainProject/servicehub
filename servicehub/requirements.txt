@@ -7,4 +7,4 @@ six==1.11.0
 tornado==5.0
 urllib3==1.22
 websocket-client==0.46.0
-pyyaml==3.12
+pyyaml==5.4
